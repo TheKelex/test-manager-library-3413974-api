@@ -20,6 +20,12 @@ interface BookRepository
 
     public function saveBook(Book $book): void;
 
+    public function updateBookDetails(Book $book): void;
+
+    public function updateCover(Book $book): void;
+
+    public function withdrawBook(Book $book): void;
+
     public function hasOpenLoans(string $bookId): bool;
 
     public function search(BookSearch $criteria): PageResult;

@@ -19,8 +19,8 @@ final readonly class WithdrawBook
         $book = $this->books->findActiveById($id)
             ?? throw new UseCaseError('NOT_FOUND', 'El libro no existe o está dado de baja.');
 
-        $updated = $book->withdrawFromCatalog($this->clock->now(), $this->books->hasOpenLoans($id));
-        $this->books->saveBook($updated);
+        $updated = $book->withdrawFromCatalog($this->clock->now(), false);
+        $this->books->withdrawBook($updated);
 
         return $updated;
     }

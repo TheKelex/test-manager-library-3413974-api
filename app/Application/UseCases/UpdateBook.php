@@ -25,7 +25,7 @@ final readonly class UpdateBook
         }
 
         $updated = $book->changeDetails($title, $author, $categoryId, $categoryName, $totalCopies);
-        $this->books->saveBook($updated);
+        $this->books->updateBookDetails($updated);
 
         return $updated;
     }

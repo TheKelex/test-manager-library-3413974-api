@@ -20,7 +20,7 @@ final readonly class RemoveCover
             ?? throw new UseCaseError('NOT_FOUND', 'El libro no existe o está dado de baja.');
         $oldKey = $book->coverKey;
         $updated = $book->withCover(null);
-        $this->books->saveBook($updated);
+        $this->books->updateCover($updated);
 
         if ($oldKey !== null) {
             $this->covers->delete($oldKey);

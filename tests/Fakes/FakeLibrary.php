@@ -3,10 +3,13 @@
 namespace Tests\Fakes;
 
 use App\Application\DTO\BookSearch;
+use App\Application\DTO\LoanListItem;
+use App\Application\DTO\LoanSearch;
 use App\Application\DTO\MemberLoanSummary;
 use App\Application\DTO\OverdueCandidate;
 use App\Application\DTO\PageResult;
 use App\Application\DTO\ReturnContext;
+use App\Application\Errors\UseCaseError;
 use App\Application\Ports\Outbound\BookRepository;
 use App\Application\Ports\Outbound\LoanRepository;
 use App\Application\Ports\Outbound\MemberRepository;
@@ -79,6 +82,30 @@ final class FakeLibrary implements BookRepository, LoanRepository, MemberReposit
 
     public function saveBook(Book $book): void
     {
+        $this->books[$book->id] = $book;
+        $this->bookSaveCount++;
+    }
+
+    public function updateBookDetails(Book $book): void
+    {
+        $this->books[$book->id] = $book;
+        $this->bookSaveCount++;
+    }
+
+    public function updateCover(Book $book): void
+    {
+        $this->books[$book->id] = $book;
+        $this->bookSaveCount++;
+    }
+
+    public function withdrawBook(Book $book): void
+    {
+        if ($this->hasOpenLoans($book->id)) {
+            throw new UseCaseError(
+                'BOOK_HAS_OPEN_LOANS',
+                'No se puede dar de baja un libro con préstamos abiertos.',
+            );
+        }
         $this->books[$book->id] = $book;
         $this->bookSaveCount++;
     }
@@ -167,6 +194,39 @@ final class FakeLibrary implements BookRepository, LoanRepository, MemberReposit
         return null;
     }
 
+    public function findLoanById(string $loanId): ?Loan
+    {
+        return $this->loans[$loanId] ?? null;
+    }
+
+    public function searchLoans(LoanSearch $criteria, \DateTimeImmutable $now): PageResult
+    {
+        $items = [];
+        foreach ($this->loans as $loan) {
+            if ($criteria->memberId !== null && $loan->memberId !== $criteria->memberId) {
+                continue;
+            }
+            if ($criteria->from !== null && $loan->loanedAt < $criteria->from->setTime(0, 0)) {
+                continue;
+            }
+            if ($criteria->to !== null && $loan->loanedAt >= $criteria->to->setTime(0, 0)->modify('+1 day')) {
+                continue;
+            }
+            $status = $loan->statusAt($now);
+            if ($criteria->status !== null && $criteria->status !== $status) {
+                continue;
+            }
+            $member = $this->members[$loan->memberId] ?? null;
+            if ($member !== null) {
+                $items[] = new LoanListItem($loan, $member->fullName, $status);
+            }
+        }
+        usort($items, static fn (LoanListItem $a, LoanListItem $b): int => $b->loan->loanedAt <=> $a->loan->loanedAt);
+        $total = count($items);
+
+        return new PageResult(array_slice($items, ($criteria->page - 1) * $criteria->size, $criteria->size), $criteria->page, $criteria->size, $total);
+    }
+
     public function returnItemAtomically(Loan $loan, LoanItem $item, Book $book): void
     {
         $this->returnSaveCount++;
@@ -201,6 +261,45 @@ final class FakeLibrary implements BookRepository, LoanRepository, MemberReposit
     public function findById(string $id): ?Member
     {
         return $this->members[$id] ?? null;
+    }
+
+    public function findByDocumentNumber(string $documentNumber): ?Member
+    {
+        foreach ($this->members as $member) {
+            if ($member->documentNumber === $documentNumber) {
+                return $member;
+            }
+        }
+
+        return null;
+    }
+
+    public function saveMember(Member $member): void
+    {
+        $this->members[$member->id] = $member;
+    }
+
+    public function searchMembers(?string $query, int $page, int $size): PageResult
+    {
+        $members = array_values(array_filter($this->members, static fn (Member $member): bool => $query === null
+            || str_contains(mb_strtolower($member->fullName), mb_strtolower($query))
+            || str_contains(mb_strtolower($member->documentNumber), mb_strtolower($query))));
+        usort($members, static fn (Member $a, Member $b): int => $a->fullName <=> $b->fullName);
+        $total = count($members);
+
+        return new PageResult(array_slice($members, ($page - 1) * $size, $size), $page, $size, $total);
+    }
+
+    public function activeLoanCount(string $memberId): int
+    {
+        $count = 0;
+        foreach ($this->loans as $loan) {
+            if ($loan->memberId === $memberId) {
+                $count += $loan->activeItemsCount();
+            }
+        }
+
+        return $count;
     }
 
     public function findByUsername(string $username): ?User

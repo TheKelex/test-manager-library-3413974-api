@@ -6,5 +6,7 @@ interface CoverStorage
 {
     public function put(string $bookId, string $contents, string $mimeType): string;
 
+    public function read(string $key): ?string;
+
     public function delete(string $key): void;
 }

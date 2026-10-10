@@ -47,6 +47,14 @@ return [
             'report' => false,
         ],
 
+        'covers' => [
+            'driver' => 'local',
+            'root' => env('COVERS_DIR', storage_path('app/private/covers')),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

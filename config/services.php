@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'jwt' => [
+        'secret' => env('JWT_SECRET'),
+        'lifetime' => 28800,
+    ],
+
 ];

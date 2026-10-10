@@ -32,7 +32,10 @@ final readonly class UploadCover
 
         $key = $this->covers->put($bookId, $contents, $mimeType);
         $updated = $book->withCover($key);
-        $this->books->saveBook($updated);
+        $this->books->updateCover($updated);
+        if ($book->coverKey !== null) {
+            $this->covers->delete($book->coverKey);
+        }
 
         return $updated;
     }

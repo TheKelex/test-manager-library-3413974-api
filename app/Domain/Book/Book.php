@@ -55,6 +55,32 @@ final readonly class Book
         );
     }
 
+    public static function reconstitute(
+        string $id,
+        string $title,
+        string $author,
+        Isbn $isbn,
+        string $categoryId,
+        string $categoryName,
+        int $totalCopies,
+        int $availableCopies,
+        ?string $coverKey,
+        ?\DateTimeImmutable $deletedAt,
+    ): self {
+        return new self(
+            $id,
+            $title,
+            $author,
+            $isbn,
+            $categoryId,
+            $categoryName,
+            $totalCopies,
+            $availableCopies,
+            $coverKey,
+            $deletedAt,
+        );
+    }
+
     public function withdraw(): self
     {
         if ($this->deletedAt !== null || $this->availableCopies === 0) {

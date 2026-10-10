@@ -21,4 +21,9 @@ final class FakeCoverStorage implements CoverStorage
     {
         unset($this->files[$key]);
     }
+
+    public function read(string $key): ?string
+    {
+        return $this->files[$key] ?? null;
+    }
 }
