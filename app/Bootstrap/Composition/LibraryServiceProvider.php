@@ -8,6 +8,7 @@ use App\Adapters\Outbound\Persistence\Repositories\EloquentLoanRepository;
 use App\Adapters\Outbound\Persistence\Repositories\EloquentMemberRepository;
 use App\Adapters\Outbound\Persistence\Repositories\EloquentMostBorrowedReportReader;
 use App\Adapters\Outbound\Persistence\Repositories\EloquentUserRepository;
+use App\Adapters\Outbound\Runtime\FixedClock;
 use App\Adapters\Outbound\Runtime\SystemClock;
 use App\Adapters\Outbound\Runtime\UuidGenerator;
 use App\Adapters\Outbound\Security\Argon2idPasswordHasher;
@@ -38,7 +39,20 @@ final class LibraryServiceProvider extends ServiceProvider
         $this->app->singleton(MemberRepository::class, EloquentMemberRepository::class);
         $this->app->singleton(MostBorrowedReportReader::class, EloquentMostBorrowedReportReader::class);
         $this->app->singleton(UserRepository::class, EloquentUserRepository::class);
-        $this->app->singleton(Clock::class, SystemClock::class);
+        $this->app->singleton(Clock::class, static function (): Clock {
+            $demoNow = config('library.demo_now');
+            if (! is_string($demoNow) || $demoNow === '') {
+                return new SystemClock;
+            }
+
+            try {
+                return new FixedClock(
+                    new \DateTimeImmutable($demoNow, new \DateTimeZone('UTC')),
+                );
+            } catch (\Exception $exception) {
+                throw new RuntimeException('DEMO_LIBRARY_TIME must be a valid timestamp.', 0, $exception);
+            }
+        });
         $this->app->singleton(IdGenerator::class, UuidGenerator::class);
         $this->app->singleton(PasswordHasher::class, Argon2idPasswordHasher::class);
         $this->app->singleton(CoverStorage::class, LocalCoverStorage::class);
