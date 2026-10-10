@@ -49,3 +49,12 @@ antes de las 3:00 p. m.**: no se presenta nada que no esté en GitHub.
 | [`test-manager-library-3413974-page`](https://github.com/code-sena/test-manager-library-3413974-page) | Sitio público estático de presentación |
 | [`test-manager-library-3413974-infra`](https://github.com/code-sena/test-manager-library-3413974-infra) | Contenedores, red, volúmenes y motor de base de datos vacío |
 | [`test-manager-library-3413974-tool`](https://github.com/code-sena/test-manager-library-3413974-tool) | Utilidades: sembrador de datos de demostración |
+
+## Ejecución durante T-01
+
+La ejecución se realiza mediante Docker Compose definido en el repositorio `infra`; no se ejecuta
+Laravel directamente en el host. Sigue las instrucciones de [`infra/README.md`](../infra/README.md)
+para construir los contenedores, iniciar PostgreSQL vacío y verificar `GET /health`.
+
+El archivo versionado `.env.testing` contiene solo valores de prueba locales. No debe copiarse a
+producción ni usarse como almacén de secretos.
